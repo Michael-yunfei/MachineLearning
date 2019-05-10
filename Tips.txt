@@ -1,0 +1,10 @@
+# Tips collection
+
+# scikit Learn
+https://scikit-learn.org/stable/supervised_learning.html#supervised-learning
+
+# ISLR
+https://github.com/JWarmenhoven/ISLR-python
+
+# print format
+https://pyformat.info
