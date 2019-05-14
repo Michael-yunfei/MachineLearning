@@ -93,7 +93,7 @@
 \lstset{language=Python}
 
 \definecolor{mygreen}{rgb}{0,0.6,0}
-\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mygray}{RGB}{145, 153, 165}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
 
 \lstset{
@@ -102,7 +102,7 @@
   breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
   breaklines=true,                 % sets automatic line breaking
   captionpos=b,                    % sets the caption-position to bottom
-  commentstyle=\color{mygreen},    % comment style
+  commentstyle=\color{gray},    % comment style
   deletekeywords={...},            % if you want to delete keywords from the given language
   escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
   extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
@@ -113,7 +113,7 @@
   morekeywords={*,...},            % if you want to add more keywords to the set
   numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
   numbersep=5pt,                   % how far the line-numbers are from the code
-  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  numberstyle=\tiny\color{gray}, % the style that is used for the line-numbers
   rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
   showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
   showstringspaces=false,          % underline spaces within strings only
@@ -191,7 +191,12 @@ With the riview of defintion of derivative, we are ready to apply the so called 
   Gradient descent is a first-order iterative optimization algorithm for finding the minimum of a function.
 \end{definition}
 
-Let's disentangle the convergence rate for the function $y= \frac{1}{2}x^2 - 3x + 3$ in figure 1.1 by presenting the following table:
+Let's disentangle the convergence rate for the function $y= \frac{1}{2}x^2 - 3x + 3$ in figure 1.1 by presenting the following figure and table:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.7 \textwidth]{gradientEg2}
+\end{figure}
+{\footnotesize
 \begin{table}[H]
   \centering
   \caption{Show the gradient descent step by step}
@@ -199,6 +204,7 @@ Let's disentangle the convergence rate for the function $y= \frac{1}{2}x^2 - 3x 
     \hline
     \hline
     Section & Points & Change of input($x$) & Change of ouput ($y$) & Convergence ratio  \\
+    \hline
     A & $(-2, 11)$ & \\
     & $(0,0)$ & 2 & 11 & $11/2 = 5.5$ \\
     \hline
@@ -208,13 +214,70 @@ Let's disentangle the convergence rate for the function $y= \frac{1}{2}x^2 - 3x 
     C & $(2, $-$1)$ &  \\
     & $(2.5, $-$1.375)$ & 0.5 & 0.375 & $0.375/0.5 = 0.75$ \\
     \hline
-    D & 
+    D & $(2.5, $-$1.375)$ & \\
+    & $(3, $-$1.5)$ & 0.5 & 0.125 & $0.125/0.5 = 0.25$ \\
+    \hline
+    \multicolumn{5}{c}{$\cdots$} \\
+    \hline
+    & $(2.9, $-$1.49499)$& \\
+    & $(2.95, $-$1.49875)$ & 0.05 & 0.00376 & $0.00376 /0.05 = 0.075$  \\
+    \hline
+    \multicolumn{5}{c}{$\cdots$} \\
+    \hline
+    & $(2.98, $-$1.499799)$& \\
+    & $(2.99, $-$1.499950)$ & 0.01 & 0.000151 & $0.00376 /0.05 = 0.00151$  \\
+    \hline
+    \multicolumn{5}{c}{we have learning rate $\alpha$ to scale the convergence rate = 1} \\
+    \hline
   \end{tabular}
 \end{table}
+}
 
+\textbf{Markup:} it's all about simultaneous moving of input ($x$) and ($y$).
 
 \section{A Mathematical example}
 
+Now, we will employ the gradient descent\footnote{Review the definition, it's an algorithm.} to find the minimum value for the function in section 1:
+\begin{align*}
+  f(x) = \frac{1}{2} x^2 - 3x + 3
+\end{align*}
+
+The intuition of using gradient descent is that we are trying to iterate the change rate of input $x$ by tracing the change rate of output $y$. To do this, we need the help from the derivative of the function. Here is the Python code:
+\begin{lstlisting}
+  # Gradient Descent: mathematical example
+  # @ Michael
+
+
+  # define function
+  def qudraticfun(x):
+      y = 1/2 * x**2 - 3 * x + 3
+      return(y)
+
+
+  # define the derivative
+  def qudraticder(x):
+      yprime = x - 3
+      return(yprime)
+
+
+  # find the minium numerically
+
+  update_x = 0  # most time we start it from zero
+  alpha = 0.01  # learning rate
+  tolerate_rule = 1  # initialize the tolerate rule for stopping iterating
+  max_iters = 10000  # set the maximum iterative number
+
+  i = 0  # interation counting index
+  while tolerate_rule >= 0.00001 and i <= max_iters:
+      start_x = update_x  # set the starting value
+      update_x = start_x - alpha * qudraticder(start_x)
+      tolerate_rule = abs(update_x - start_x)
+
+  print("The minimum value is", qudraticfun(update_x),
+        "when x is equal to", update_x)
+
+  # The minimum value is -1.4999995136117308 when x is equal to 2.999013705653870
+\end{lstlisting}
 
 \section{A Machine Learning Example}
 
