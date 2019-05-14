@@ -1,4 +1,8 @@
+
 # MachineLearning
+
+<img align="left" width="100" height="100" src="https://images.app.goo.gl/QwqTk4Fk23G9Bvyo6">
+
 Repository for studying machine learning in Konstanz
 
 * ELS: The Elements of Statistical Learning (Hastie, Tibshirani, and Friedman)
