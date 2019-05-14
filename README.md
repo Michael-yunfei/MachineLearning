@@ -1,7 +1,7 @@
 
 # MachineLearning
 
-![](https://images.app.goo.gl/QwqTk4Fk23G9Bvyo6)
+![](https://github.com/Michael-yunfei/MachineLearning/blob/master/mlogo.jpg)
 
 
 Repository for studying machine learning in Konstanz
