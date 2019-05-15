@@ -10,7 +10,7 @@ Repository for studying machine learning in Konstanz
 * Assignment folder contains all the assignments
 * project folders contains the project files and code
 * Notes: a collection of useful online notes
-
+* [Andrew Ng ML Course](https://see.stanford.edu/course/cs229)
 
 ## Explain Classes of Python by comparing with R
 
