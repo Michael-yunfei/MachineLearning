@@ -249,24 +249,28 @@ class ML_gradient(object):
         outsample_ypredic = self.xtest @ self.coeff
 
         xdomain1 = np.linspace(0, np.max(self.xtrain))
-        yfitline1 = self.coeff[0] + self.coeff[1] * xdomain1
+        xfit = np.hstack([np.ones(xdomain1.shape[0]).reshape(-1, 1),
+                             np.asarray(xdomain1).reshape(-1, 1)])
+        yfitline1 = xfit @ self.coeff
         xdomain2 = np.linspace(0, np.max(self.xtest))
-        yfitline2 = self.coeff[0] + self.coeff[1] * xdomain2
+        xfit2 = np.hstack([np.ones(xdomain2.shape[0]).reshape(-1, 1),
+                             np.asarray(xdomain2).reshape(-1, 1)])
+        yfitline2 = xfit2 @ self.coeff
         fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True)
         fig.suptitle(
             'Ground-truth data, predicted data, and fitted regression line')
-        axes[0].plot(self.xtrain, self.ytrain, 'o', color='#4688F1',
+        axes[0].plot(self.xtrain[:, 1], self.ytrain, 'o', color='#4688F1',
                      label='Groud-truth')
-        axes[0].plot(insample_ypredic, 'o', color='#F34235',
+        axes[0].plot(self.xtrain[:, 1], insample_ypredic, 'o', color='#F34235',
                      label='Predicted')
         axes[0].plot(xdomain1, yfitline1, color='#F67770',
                      label='Fitted line', linewidth=1.5)
         axes[0].set(xlabel=xlab, ylabel='Weight',
                     title='Insample')
         axes[0].legend(loc=4)
-        axes[1].plot(self.xtest, self.ytest, 'o', color='#4688F1',
+        axes[1].plot(self.xtest[:, 1], self.ytest, 'o', color='#4688F1',
                      label='Groud-truth')
-        axes[1].plot(outsample_ypredic, 'o', color='#F34235',
+        axes[1].plot(self.xtest[:, 1], outsample_ypredic, 'o', color='#F34235',
                      label='Predicted')
         axes[1].plot(xdomain2, yfitline2, color='#F6776F',
                      label='Fitted line', linewidth=1.5)
@@ -354,14 +358,15 @@ plt.show()
 
 # nonrandomly selected
 
-gradientEs1_nonramdom = ML_gradient(input_x, input_y, theta_initial, 0.8)
-gradientEs1_nonramdom.estimate(alpha, tolerate, maxiter)
-gradientEs1_nonramdom.performance()
-
+gradientEs1_nonrandom = ML_gradient(input_x, input_y, theta_initial, 0.8)
+gradientEs1_nonrandom.estimate(alpha, tolerate, maxiter)
+gradientEs1_nonrandom.performance()
 #       Insample Loss	Outsample Loss
 # Absolute	0.528365	0.720710
 # Square	0.953769	1.406060
 # Huber	    0.684693	1.006636
+gradientEs1_nonrandom.trainplot2D('red')
+
 
 gradientEs2_nonrandom = ML_gradient(input_x2, input_y, theta_initial2, 0.8)
 gradientEs2_nonrandom.estimate(alpha, tolerate, maxiter)
