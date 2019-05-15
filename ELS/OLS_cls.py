@@ -37,7 +37,7 @@ class OLS(object):
         self.K = np.shape(self.X)[1]
         YN = np.shape(self.Y)[0]
         if (self.N != YN):
-            print('Input Y and X are nonconfortable')
+            print('Input Y and X are noncomfortable')
             sys.exit(0)
 
     # normalize function

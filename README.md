@@ -1,5 +1,5 @@
 
-# MachineLearning
+# Machine Learning
 
 ![](https://github.com/Michael-yunfei/MachineLearning/blob/master/mlogo.jpg)
 

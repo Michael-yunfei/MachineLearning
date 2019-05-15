@@ -9,7 +9,7 @@ import sklearn.linear_model as skl_lm
 from sklearn import preprocessing
 from sklearn.preprocessing import scale
 import sys
-
+import random
 
 print(sys.version)
 
@@ -21,9 +21,14 @@ os.chdir('/Users/Michael/Documents/MachineLearning/ELS')
 prostate = pd.read_csv('prostate.csv', delim_whitespace=True)
 prostate.info()
 prostate.head()
+prostate
 prostate.columns
 # Index(['lcavol', 'lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason', 'pgg45',
 # 'lpsa', 'train']
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.scatter(prostate.age, prostate.lweight)
+plt.plot(prostate.age)
 
 # preprare the data
 pro_train = prostate[prostate.train == 'T']
@@ -153,6 +158,62 @@ class ACk():
 
 class_b = ACk(a)
 class_b.doitdo()
+
+
+# convert mat file into csv
+mat = scipy.io.loadmat('file.mat')
+mat = {k:v for k, v in mat.items() if k[0] != '_'}
+data = pd.DataFrame({k: pd.Series(v[0]) for k, v in mat.iteritems()})
+data.to_csv("example.csv")
+
+
+alist = [1, 2, 3, 6]
+alist[:]
+
+blist = [[1], [2], [3]]
+[n[0] for n in blist]
+
+# generate random intger
+random.sample(range(100), 50)
+[i for i in range(10)] * (-1)
+
+mma = np.asmatrix(np.array(range(18)).reshape(6, 3))
+mma[[-5, -3, -1], :]
+sample = mma
+sample_length = 4
+random_index = random.sample(range(sample.shape[0]), sample_length)
+trainSample = sample[random_index, :]
+testSample = np.delete(sample, random_index, 0)
+
+n = input_x.shape[0]
+theta = np.array([1.23, 2.89]).reshape(-1, 1)
+fx = input_x @ theta
+error = np.abs(input_y - fx)
+global_epsilon = 1.13
+
+
+def hl(element):
+    global global_epsilon
+    if element <= global_epsilon:
+        loss = 1/2 * element**2
+    else:
+        loss = global_epsilon * element - 1/2 * global_epsilon**2
+
+    return(loss)
+
+
+hlvector = np.vectorize(hl)
+hlvector(error)
+
+
+va = np.array(range(9)).reshape(-1, 1)
+vb = np.array(range(9)).reshape(-1, 1)
+
+np.asmatrix(np.stack((va, vb),axis=-1)).shape
+
+va.reshape(-1, -1)
+
+np.min(va)
 
 
 
