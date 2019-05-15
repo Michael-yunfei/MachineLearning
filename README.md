@@ -10,3 +10,8 @@ Repository for studying machine learning in Konstanz
 * Assignment folder contains all the assignments
 * project folders contains the project files and code
 * Notes: a collection of useful online notes
+
+
+## Explain Classes of Python by comparing with R
+
+[You might find this video helpful (sorry for the bad quality)](https://www.youtube.com/watch?v=z1LD418ZTrc&t=437s)
