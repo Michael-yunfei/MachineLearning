@@ -219,7 +219,7 @@ def GradientDescent(x, y, theta, alpha, tolerate, maxiterate, epsilon):
         hcost_vector = np.append(hcost_vector, hbs, axis=0)  # store cost
         fx = x @ current_theta
         update_theta = current_theta - alpha * (1/n) * x.transpose() @ (fx - y)
-        tolerate_rule = np.min(np.abs(update_theta - current_theta))
+        tolerate_rule = np.minimum(np.abs(update_theta - current_theta))
         i += 1
         current_theta = update_theta
 
@@ -259,6 +259,38 @@ Est_coefficients, loss_matrix = GradientDescent(input_x, input_y,
                                                 epsilon)
 
 Est_coefficients
+
+
+# Huber gradient descent
+def HuberGradientDescent(x, y, theta, alpha, tolerate, maxiterate, epsilon):
+    i = 0  # set the iteration counting index
+    tolerate_rule = 1  # set the initial tolerate rate
+    n = x.shape[0]
+    current_theta = theta
+    cost_vector = np.empty([0, 1])
+
+    # iterate
+    while tolerate_rule >= tolerate and i <= maxiterate:
+        sl = np.array(SquareLoss(x, y, current_theta)).reshape([1, 1])
+        cost_vector = np.append(cost_vector, sl, axis=0)  # store cost function
+        fx = x @ current_theta
+        error = fx - y
+        if np.abs(error) <= epsilon:
+            update_theta = current_theta -
+            alpha * (1/n) * x.transpose() @ (fx - y)
+        else:
+            if error >= 0:
+                update_theta = current_theta -
+                alpha * (1/n) * 1
+            else:
+                update_theta = current_theta -
+                alpha * (1/n) * (-1)
+        tolerate_rule = np.minimum(np.abs(update_theta - current_theta))
+        i += 1
+        current_theta = update_theta
+
+    return(current_theta, cost_vector)
+
 
 # at this stage, I realize it's better to write a class
 # End of Code
