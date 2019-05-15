@@ -41,7 +41,7 @@ input_y.shape
 # define the loss function
 def SquareLoss(x, y, theta):
     """
-    A square error loss function to compare the loss (cost) error
+    A square error loss function to compute the loss (cost) error
     Input: x - matrix n by m
            y - vector n by 1
            theta - vector m by 1, order matters considering the intercept
@@ -74,7 +74,7 @@ def GradientDescent(x, y, theta, alpha, tolerate, maxiterate):
         cost_vector = np.append(cost_vector, sl, axis=0)  # store cost function
         fx = x @ current_theta
         update_theta = current_theta - alpha * (1/n) * x.transpose() @ (fx - y)
-        tolerate_rule = np.min(np.abs(update_theta - current_theta))
+        tolerate_rule = np.minimum(np.abs(update_theta - current_theta))
         i += 1
         current_theta = update_theta
 
