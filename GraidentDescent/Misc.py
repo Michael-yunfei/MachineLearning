@@ -13,3 +13,9 @@ while i <= 100:
 
 
 store_vector
+
+np.random.randint(10)
+
+
+amatrix = np.array(range(9)).reshape([3, 3])
+amatrix[1:2]

@@ -127,35 +127,12 @@ class LP_regression(object):
 
             return(trainSampleX, testSampleX, trainSampleY, testSampleY)
 
-    # normalize function
-    @staticmethod
-    def normalize(array):
-        arrayNorm = (array - array.min())/(array.max() - array.min())
-        return arrayNorm
-
-    # standardlize function
-    @staticmethod
-    def standard(array):
-        arrayStand = (array - array.mean())/array.std()
-        return arrayStand
-
-    def OLS(self, normalized=False, standardized=False):
+    def OLS(self):
         '''
         Estimate the coefficients, give
         with normalize X or standardize X
         '''
-        # normalize or standardize
-        if normalized is True and standardized is True:
-            print("You can either only normalize X or standardize X,\
-                  but not at the same time: dont't set them true at\
-                  the same time")
-            sys.exit(0)
-        elif normalized is True:
-            self.xtrain = np.apply_along_axis(LP_regression.normalize,
-                                              axis=0, arr=self.xtrain)
-        elif standardized is True:
-            self.xtrain = np.apply_along_axis(LP_regression.standard,
-                                              axis=0, arr=self.xtrain)
+
         # use betahat = inv(X'X)X'Y to get the results
         self.olsBetahat = (
             np.linalg.inv(
@@ -167,20 +144,10 @@ class LP_regression(object):
         self.olsYhat = self.xtrain @ self.olsBetahat
         self.olsResidu = self.ytrain - self.olsYhat
 
-    def BGD(self, theta, alpha, tolerate, maxiterate,
-            normalized=False, standardized=False):
-        # normalize or standardize
-        if normalized is True and standardized is True:
-            print("You can either only normalize X or standardize X,\
-                  but not at the same time: dont't set them true at\
-                  the same time")
-            sys.exit(0)
-        elif normalized is True:
-            self.xtrain = np.apply_along_axis(LP_regression.normalize,
-                                              axis=0, arr=self.xtrain)
-        elif standardized is True:
-            self.xtrain = np.apply_along_axis(LP_regression.standard,
-                                              axis=0, arr=self.xtrain)
+    def BGD(self, theta, alpha, tolerate, maxiterate):
+        '''
+        Bath Gradient Descent method to estimate coefficients
+        '''
         i = 0  # set the iteration counting index
         tolerate_rule = 1  # set the initial tolerate rate
         n = self.xtrain.shape[0]
@@ -199,6 +166,33 @@ class LP_regression(object):
 
         self.bgdBetahat = current_theta
         return(current_theta)
+
+    def SGD(self, theta, maxiterate):
+        '''
+        Stochastic gradient descent method
+        input: initial value for theta
+               maxiterate to do iteration
+        '''
+        n = self.xtrain.shape[0]
+        current_theta2 = np.asarray(theta).reshape(-1, 1)
+        alpha0, alpha1 = 5, 50
+        for it in range(maxiterate):
+            randomIndex = random.sample(range(n), n)
+            xtrain = self.xtrain[randomIndex]
+            ytrain = self.ytrain[randomIndex]
+            for i in range(n):
+                x_i = xtrain[i].reshape(1, -1)
+                y_i = ytrain[i].reshape(-1, 1)
+                alpha = alpha0/(alpha1 + it*n+i)
+                fx = x_i @ current_theta2
+                update_theta2 = (current_theta2
+                                 - alpha * 2
+                                 * x_i.transpose() @ (fx - y_i))
+                current_theta2 = update_theta2
+
+        self.sgdBetahat = current_theta2
+        self.sgdYhat = self.xtrain @ self.sgdBetahat
+        return(current_theta2)
 
     @staticmethod
     def AbsoluteLoss(x, y, theta):
@@ -247,9 +241,9 @@ class LP_regression(object):
         if method == 'OLS':
             self.coeff = self.olsBetahat
         elif method == 'BGD':
-            self.coeff == self.bgdBetahat
+            self.coeff = self.bgdBetahat
         elif method == 'SGD':
-            self.coeff == self.olsBetahat
+            self.coeff = self.sgdBetahat
         else:
             print("Make sure your method is one of those:\
                   'OLS', 'BGD', 'SGD'")
@@ -309,7 +303,7 @@ fig, ax = plt.subplots(figsize=(8, 6))
 ax.scatter(whr.Freedom, whr["Happiness Score"])
 ax.set(xlabel='Freedom', ylabel='Happiness Score',
        title='Scatter plot of main variables')
-fig.show()
+plt.show()
 
 # initialize the class to fit the regression
 # make insure input are in matrix format and add constant
@@ -334,7 +328,7 @@ ax.scatter(whr.Freedom, whr["Happiness Score"])
 ax.plot(whr.Freedom, task1.olsYhat, color='#F34235')
 ax.set(xlabel='Freedom', ylabel='Happiness Score',
        title='Scatter plot of main variables')
-fig.show()
+plt.show()
 
 # estimate coefficients with batch gradient descent
 theta_initial1 = [0, 0]  # set initial value
@@ -345,14 +339,84 @@ maxiter1 = 15000
 task1.BGD(theta_initial1, alpha1, tolerate1, maxiter1)
 task1.bgdBetahat  # array([[3.79527656], [4.2805871 ]])
 
+# estimate coefficients with stochastic gradiet descent
 
+task1.SGD(theta_initial1, 100)
+task1.sgdBetahat  # array([[4.04331295], [3.6267929 ]])
 
+# until now, it works not that well for SGD
 
+###############################################################################
+# Polynomial Regression with One Regressor:
+###############################################################################
+# k = 10
+# x = freedome score
 
+# Prepare the dataset
+k = 10
+input_y = np.asmatrix(whr["Happiness Score"]).reshape(-1, 1)
+# constrcut a matrix to store all X (x^0 to x^10)
+poly_Xmatrix = np.ones(whr.shape[0]).reshape(-1, 1)
+for i in range(k):
+    poly_Xmatrix = np.hstack([poly_Xmatrix,
+                              np.asarray(whr.Freedom).reshape(-1, 1)**(i+1)])
 
+# OLS
+ols_poly_coeffs = {}
+ols_poly_sqloss = {}
+# initialize two dictionary to store all performace
+# constrcut a matrix to store all X (x^0 to x^10)
 
+fig, axes = plt.subplots(3, 4, figsize=(16, 9), sharex=True)
+fig.suptitle(
+    'All fitted line with polynomial regressions (k up to 10)')
+for i in range(k):
+    input_xi = poly_Xmatrix[:, 0:(i+2)]
+    modename = 'model'+str(i+1)
+    olsreg = LP_regression(input_xi, input_y, 1)
+    olsreg.OLS()  # estimate coefficients with OLS
+    ols_poly_coeffs[modename] = olsreg.olsBetahat
+    ols_poly_sqloss[modename] = olsreg.performance(method='OLS').values[1]
+    ax = fig.add_subplot(3, 4, i+1)
+    ax.scatter(olsreg.xtrain[:, 1], olsreg.ytrain)
+    ax.scatter(olsreg.xtrain[:, 1], olsreg.olsYhat, color='#F67770')
+    ax.set(xlabel='Freedom', ylabel='Happiness Score')
+    ax = {}
+plt.show()
 
+print(ols_poly_coeffs)
+print(pd.DataFrame(ols_poly_sqloss))
 
+# SGD
+sgd_poly_coeffs = {}
+sgd_poly_sqloss = {}
+# initialize two dictionary to store all performace
+
+fig, axes = plt.subplots(3, 4, figsize=(16, 9), sharex=True)
+fig.suptitle(
+    'All fitted line with polynomial regressions (k up to 10)')
+for i in range(k):
+    input_xi = poly_Xmatrix[:, 0:(i+2)]
+    modename = 'model'+str(i+1)
+    sgdreg = LP_regression(input_xi, input_y, 1)  # initialize class
+    theta = np.random.randn(input_xi.shape[1], 1)
+    sgdreg.SGD(theta, 100)  # estimate coefficients with OLS
+    sgd_poly_coeffs[modename] = sgdreg.sgdBetahat
+    sgd_poly_sqloss[modename] = sgdreg.performance(method='SGD').values[1]
+    ax = fig.add_subplot(3, 4, i+1)
+    ax.scatter(sgdreg.xtrain[:, 1], sgdreg.ytrain)
+    ax.scatter(sgdreg.xtrain[:, 1], sgdreg.sgdYhat, color='#F67770',
+               label='Fitted line')
+    ax.set(xlabel='Freedom', ylabel='Happiness Score')
+    ax = {}
+plt.show()
+
+print(sgd_poly_coeffs)
+print(pd.DataFrame(sgd_poly_sqloss))
+
+###############################################################################
+# Regression with Two Regressors:
+###############################################################################
 
 
 

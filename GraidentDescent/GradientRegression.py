@@ -74,21 +74,21 @@ def GradientDescent(x, y, theta, alpha, tolerate, maxiterate):
         cost_vector = np.append(cost_vector, sl, axis=0)  # store cost function
         fx = x @ current_theta
         update_theta = current_theta - alpha * (1/n) * x.transpose() @ (fx - y)
-        tolerate_rule = np.minimum(np.abs(update_theta - current_theta))
+        tolerate_rule = np.max(np.abs(update_theta - current_theta))
         i += 1
         current_theta = update_theta
 
-    return(current_theta, cost_vector)
+    return(current_theta, cost_vector, i)
 
 
 theta_initial = np.array([0, 0]).reshape(-1, 1)  # give initial value
 alpha = 0.01  # learning rate
 tolerate = 0.00001  # tolerate rates
-maxiter1 = 1500
-coefficents1, lossvalues1 = GradientDescent(input_x, input_y,
-                                            theta_initial, alpha,
-                                            tolerate, maxiter1)
-
+maxiter1 = 5000
+coefficents1, lossvalues1, iter1 = GradientDescent(input_x, input_y,
+                                                   theta_initial, alpha,
+                                                   tolerate, maxiter1)
+iter1
 print("The estimated coefficients are", coefficents1)
 # The estimated coefficients are [[-3.63077001] [ 1.16641043]]
 lossvalues1.shape
@@ -134,6 +134,86 @@ ax.legend(loc=4)
 fig.show()
 
 
+# Stochastic gradient method without updating the learning rate
+# we have two ways to do randomization
+# 1) - reshuffle the whole dataset and throw it to Batch-gradient method
+# 2) - use original dataset and randomize it inside the gradient algorithm
+
+# without randomization
+
+theta_initial = np.array([0, 0]).reshape(-1, 1)  # give initial value
+alpha = 0.01  # learning rate
+tolerate = 0.00001  # tolerate rates
+maxiter1 = 5000
+coefficents1, lossvalues1, iter1 = GradientDescent(input_x, input_y,
+                                                   theta_initial, alpha,
+                                                   tolerate, maxiter1)
+iter1  # 3645
+print("The estimated coefficients are", coefficents1)
+# The estimated coefficients are [[-3.89024352] [ 1.19247736]]
+
+
+# Stochastic gradient algorithm
+def StoGradientDescent(x, y, theta, alpha, tolerate, maxiterate):
+    i = 0  # set the iteration counting index
+    tolerate_rule = 1  # set the initial tolerate rate
+    n = x.shape[0]
+    current_theta = theta
+    # iterate
+    while tolerate_rule >= tolerate and i <= maxiterate:
+        randomIndex = np.random.randint(n)
+        randomx = x[randomIndex:randomIndex+1]
+        randomy = y[randomIndex:randomIndex+1]
+        fx = randomx @ current_theta
+        update_theta = (current_theta
+                        - alpha * randomx.transpose() @ (fx - randomy))
+        tolerate_rule = np.max(np.abs(update_theta - current_theta))
+        i += 1
+        current_theta = update_theta
+
+    return(current_theta, i)
+
+
+coefficents2, iter2 = StoGradientDescent(input_x, input_y,
+                                         theta_initial, alpha,
+                                         tolerate, maxiter1)
+iter2  # 5001
+print("The estimated coefficients are", coefficents2)
+# The estimated coefficients are [[-3.47862957][ 1.75081605]]
+# you can see that it does not always converge, and it takes many iterations
+
+
+# Fix the stochastic gradient descent function
+def StoGradientDescent(x, y, theta, alpha, tolerate, maxiterate):
+    i = 0  # set the iteration counting index
+    tolerate_rule = 1  # set the initial tolerate rate
+    n = x.shape[0]
+    current_theta = theta
+    global_theta = theta*2
+    # iterate
+    while tolerate_rule >= tolerate and i <= maxiterate:
+        for dataindex in range(n):
+            randomIndex = np.random.randint(n)
+            randomx = x[randomIndex:randomIndex+1]
+            randomy = y[randomIndex:randomIndex+1]
+            fx = randomx @ current_theta
+            update_theta = (current_theta
+                            - alpha * randomx.transpose() @ (fx - randomy))
+            current_theta = update_theta
+        tolerate_rule = np.max(np.abs(global_theta - current_theta))
+        i += 1
+        global_theta = current_theta
+
+    return(current_theta, i)
+
+
+coefficents3, iter3 = StoGradientDescent(input_x, input_y,
+                                         theta_initial, alpha,
+                                         tolerate, maxiter1)
+iter3  # 5001
+print("The estimated coefficients are", coefficents3)
+# The estimated coefficients are [[-4.522859  ] [ 1.27718722]]
+# it looks like the stochastic one need the veryign learning rate
 # show the dynamics of loss function in gradient descent
 # I will add it later
 # End of code

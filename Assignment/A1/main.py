@@ -16,7 +16,8 @@ import statsmodels.api as sm
 # get and set the working directory
 # please set your own working directory which inlcudes the dataset
 os.getcwd()
-os.chdir('/Users/Michael/Documents/MachineLearning/Assignment/A1')
+# os.chdir('/Users/Michael/Documents/MachineLearning/Assignment/A1')
+os.chdir('C:/Users/User/Documents/GitHub/assignment-1-rudnitckaiawangzhang')
 
 
 ###############################################################################
@@ -104,31 +105,32 @@ class ML_gradient(object):
                   Make sure input are either matrix or dataframe')
             sys.exit(0)
 
-        self.xtrain, self.xtest = ML_gradient.splitSample(self.X,
-                                                          percentile,
-                                                          randomsplit)
-        self.ytrain, self.ytest = ML_gradient.splitSample(self.Y,
-                                                          percentile,
-                                                          randomsplit)
+        self.xtrain, self.xtest, self.ytrain, self.ytest = (
+            ML_gradient.splitSample(self.X, self.Y, percentile, randomsplit))
 
     @staticmethod
-    def splitSample(sample, trainSize, permute=False):
+    def splitSample(sampleX, sampleY, trainSize, permute=False):
         '''
         static function to split the sample
         '''
-        sample_length = int(sample.shape[0] * trainSize)
+        sample_length = int(sampleX.shape[0] * trainSize)
         if permute is True:
-            random_index = random.sample(range(sample.shape[0]), sample_length)
-            trainSample = sample[random_index, :]
-            testSample = np.delete(sample, random_index, 0)
+            random_index = random.sample(range(sampleX.shape[0]),
+                                         sample_length)
+            trainSampleX = sampleX[random_index, :]
+            trainSampleY = sampleY[random_index, :]
+            testSampleX = np.delete(sampleX, random_index, 0)
+            testSampleY = np.delete(sampleY, random_index, 0)
 
-            return(trainSample, testSample)
+            return(trainSampleX, testSampleX, trainSampleY, testSampleY)
         else:
             percentile_index = list(range(sample_length))
-            trainSample = sample[percentile_index, :]
-            testSample = np.delete(sample, percentile_index, 0)
+            trainSampleX = sampleX[percentile_index, :]
+            trainSampleY = sampleY[percentile_index, :]
+            testSampleX = np.delete(sampleX, percentile_index, 0)
+            testSampleY = np.delete(sampleY, percentile_index, 0)
 
-            return(trainSample, testSample)
+            return(trainSampleX, testSampleX, trainSampleY, testSampleY)
 
     @staticmethod
     def AbsoluteLoss(x, y, theta):
@@ -250,15 +252,15 @@ class ML_gradient(object):
 
         xdomain1 = np.linspace(0, np.max(self.xtrain))
         xfit = np.hstack([np.ones(xdomain1.shape[0]).reshape(-1, 1),
-                             np.asarray(xdomain1).reshape(-1, 1)])
+                          np.asarray(xdomain1).reshape(-1, 1)])
         yfitline1 = xfit @ self.coeff
         xdomain2 = np.linspace(0, np.max(self.xtest))
         xfit2 = np.hstack([np.ones(xdomain2.shape[0]).reshape(-1, 1),
-                             np.asarray(xdomain2).reshape(-1, 1)])
+                           np.asarray(xdomain2).reshape(-1, 1)])
         yfitline2 = xfit2 @ self.coeff
         fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True)
         fig.suptitle(
-            'Ground-truth data, predicted data, and fitted regression line')
+            'Prediction of package weight based on the number of red candies')
         axes[0].plot(self.xtrain[:, 1], self.ytrain, 'o', color='#4688F1',
                      label='Groud-truth')
         axes[0].plot(self.xtrain[:, 1], insample_ypredic, 'o', color='#F34235',
@@ -333,22 +335,49 @@ gradientEs2.performance()
 insample_predict, outsample_predict = gradientEs2.predict()
 
 
-# 3D plot
+# 3D plot for insample
 green_surf, blue_surf = np.meshgrid(
     np.linspace(MandMs.Green.min(), MandMs.Green.max(), 100),
     np.linspace(MandMs.Blue.min(), MandMs.Blue.max(), 100))
-X_surf = np.asmatrix([green_surf.ravel(), blue_surf.ravel()]).reshape(-1, 2)
-Y_fitsurf = gradientEs2.coeff[0] + X_surf @ gradientEs2.coeff[1:3]
+X_surf = np.asmatrix([green_surf.ravel(), blue_surf.ravel()])
+Y_fitsurf = (gradientEs2.coeff[0]
+             + gradientEs2.coeff.transpose()[0, 1:3] @ X_surf)
 
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(gradientEs2.xtrain[:, 1], gradientEs2.xtrain[:, 2],
-           gradientEs2.ytrain, 'o')
+           gradientEs2.ytrain, 'o', color='r')
 ax.plot_surface(green_surf, blue_surf, Y_fitsurf.reshape(green_surf.shape),
-                color='None', alpha=0.3)
+                color='#6639B6', alpha=0.3)
 ax.set_xlabel("Green")
 ax.set_ylabel("Blue")
 ax.set_zlabel("Weight")
+ax.title.set_text(
+    ('Prediction of package weight based on'
+     + 'the number of green and blue candies (Insample)'))
+plt.show()
+
+
+# 3D plot for outsample
+green_surf, blue_surf = np.meshgrid(
+    np.linspace(MandMs.Green.min(), MandMs.Green.max(), 100),
+    np.linspace(MandMs.Blue.min(), MandMs.Blue.max(), 100))
+X_surf = np.asmatrix([green_surf.ravel(), blue_surf.ravel()])
+Y_fitsurf = (gradientEs2.coeff[0]
+             + gradientEs2.coeff.transpose()[0, 1:3] @ X_surf)
+
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(gradientEs2.xtest[:, 1], gradientEs2.xtest[:, 2],
+           gradientEs2.ytest, 'o', color='r')
+ax.plot_surface(green_surf, blue_surf, Y_fitsurf.reshape(green_surf.shape),
+                color='#6639B6', alpha=0.3)
+ax.set_xlabel("Green")
+ax.set_ylabel("Blue")
+ax.set_zlabel("Weight")
+ax.title.set_text((
+    'Prediction of package weight based on'
+    + 'the number of green and blue candies (Outsample)'))
 plt.show()
 
 
@@ -361,17 +390,17 @@ plt.show()
 gradientEs1_nonrandom = ML_gradient(input_x, input_y, theta_initial, 0.8)
 gradientEs1_nonrandom.estimate(alpha, tolerate, maxiter)
 gradientEs1_nonrandom.performance()
+print(gradientEs1_nonrandom.performance())
 #       Insample Loss	Outsample Loss
 # Absolute	0.528365	0.720710
 # Square	0.953769	1.406060
 # Huber	    0.684693	1.006636
 gradientEs1_nonrandom.trainplot2D('red')
 
-
 gradientEs2_nonrandom = ML_gradient(input_x2, input_y, theta_initial2, 0.8)
 gradientEs2_nonrandom.estimate(alpha, tolerate, maxiter)
 gradientEs2_nonrandom.performance()
-
+print(gradientEs2_nonrandom.performance())
 #       Insample Loss	Outsample Loss
 # Absolute	0.554169	0.885200
 # Square	0.922815	1.958244
