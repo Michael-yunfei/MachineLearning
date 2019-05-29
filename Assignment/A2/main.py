@@ -11,6 +11,8 @@ import seaborn as sns
 import random
 import sys
 import statsmodels.api as sm
+from mpl_toolkits import mplot3d
+import time
 
 # get and set the working directory
 # please set your own working directory which inlcudes the dataset
@@ -332,12 +334,29 @@ plt.show()
 
 # estimate coefficients with batch gradient descent
 theta_initial1 = [0, 0]  # set initial value
-alpha1 = 0.01  # set learning rate, don't set it > 0.01
-tolerate1 = 0.00000001
+alpha1 = 0.998 # set learning rate, don't set it > 0.01
+tolerate1 = 0.000001
 maxiter1 = 15000
 
+time_start = time.time()
 task1.BGD(theta_initial1, alpha1, tolerate1, maxiter1)
-task1.bgdBetahat  # array([[3.79527656], [4.2805871 ]])
+print(task1.bgdBetahat)  # [[3.79527656][4.2805871 ]]
+time_end = time.time()
+time_end - time_start
+
+
+# find the optimial learning rate (warning: it takes several minutes)
+time_elapsed = np.zeros(500)
+learningrate = np.linspace(0.001, 1, 500)
+for n, m in enumerate(learningrate):
+    temp = LP_regression(input_x, input_y, 1)
+    time_start = time.time()
+    temp.BGD(theta_initial1, m, 0.00001, 1500000000)  # set maxiterate very big
+    time_end = time.time()
+    time_elapsed[n] = time_end - time_start
+
+learningrate[list(time_elapsed).index(min(time_elapsed))]
+# it's very interesting that learning rate is close to 1 
 
 # estimate coefficients with stochastic gradiet descent
 
@@ -417,6 +436,66 @@ print(pd.DataFrame(sgd_poly_sqloss))
 ###############################################################################
 # Regression with Two Regressors:
 ###############################################################################
+
+# prepare the dataset
+
+
+def Fun_standard(array):
+    '''
+    A function to standardize the array
+    '''
+    arrayStand = (array - array.mean())/array.std()
+    return arrayStand
+
+
+input_x2 = np.hstack([np.ones(whr.shape[0]).reshape(-1, 1),
+                      Fun_standard(np.asarray(whr.Family).reshape(-1, 1)),
+                      Fun_standard(np.asarray(whr.Freedom).reshape(-1, 1))])
+input_y2 = np.asmatrix(whr["Happiness Score"]).reshape(-1, 1)
+
+
+# Gradient Method
+theta_initial2 = [0, 0, 0]  # set initial value
+alpha2 = 0.01  # set learning rate, don't set it > 0.01
+tolerate2 = 0.000001
+maxiter2 = 10000
+
+two_regression = LP_regression(input_x2, input_y2, 1)
+two_regression.BGD(theta_initial2, alpha2, tolerate2, maxiter2)
+two_regression.bgdBetahat
+
+# 3D plot
+family_surf, freedom_surf = np.meshgrid(
+    np.linspace(Fun_standard(whr.Family).min(),
+                Fun_standard(whr.Family).max(), 200),
+    np.linspace(Fun_standard(whr.Freedom).min(),
+                Fun_standard(whr.Freedom).max(), 200))
+X_surf = np.asmatrix([family_surf.ravel(), freedom_surf.ravel()])
+Y_fitsurf = (two_regression.bgdBetahat[0]
+             + two_regression.bgdBetahat.transpose()[0, 1:3] @ X_surf)
+
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(two_regression.xtrain[:, 1], two_regression.xtrain[:, 2],
+           two_regression.ytrain, 'o', color='r')
+ax.plot_surface(family_surf, freedom_surf, Y_fitsurf.reshape(family_surf.shape),
+                color='#4BAE4F', alpha=0.36)
+ax.set_xlabel("Family")
+ax.set_ylabel("Freedom")
+ax.set_zlabel("Hapiness")
+ax.title.set_text((
+    'Prediction of package weight based on'
+    + 'the number of green and blue candies (Outsample)'))
+plt.show()
+
+
+
+
+
+
+
+
+
 
 
 
