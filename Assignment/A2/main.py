@@ -13,6 +13,7 @@ import sys
 import statsmodels.api as sm
 from mpl_toolkits import mplot3d
 import time
+import math
 
 # get and set the working directory
 # please set your own working directory which inlcudes the dataset
@@ -295,6 +296,63 @@ class LP_regression(object):
 
         return(per_dataframe)
 
+    def KFoldXV(self, kfold, method):
+        '''
+        A k-fold cross-validation function
+        Input: k-fold, such as 5 fold
+               method: BGD, SGD, or OLS
+        output: the k-fold losses stored in a dictionary
+                the k-fold coefficients stored in a dictionary
+        '''
+        # split the dataset index
+        nrows = self.X.shape[0]
+        ncolumns = self.X.shape[1]
+        subsetRows = math.floor(nrows/kfold)
+        randomIndex = random.sample(range(nrows), nrows)
+        crossCoeff = {}  # initialize a dict to store coefficients
+        crossPerfom = {}  # initialize a dict to store performance
+        for i in range(kfold):
+            subsetIndex = randomIndex[i*subsetRows:(i+1)*subsetRows]
+            testsubset_x = self.X[subsetIndex, :]
+            trainsubset_x = np.delete(self.X, subsetIndex, 0)
+            testsubset_y = self.Y[subsetIndex, :]
+            trainsubset_y = np.delete(self.Y, subsetIndex, 0)
+            if method == 'OLS':
+                olsMethod = LP_regression(trainsubset_x, trainsubset_y, 1)
+                olsMethod.OLS()
+                modename = 'OLSFold'+str(i+1)
+                crossCoeff[modename] = olsMethod.olsBetahat
+                olsLoss = LP_regression.SquareLoss(testsubset_x,
+                                                   testsubset_y,
+                                                   olsMethod.olsBetahat)
+                crossPerfom[modename] = olsLoss
+            elif method == 'BGD':
+                bgdMethod = LP_regression(trainsubset_x, trainsubset_y, 1)
+                thetaInitial = np.random.rand(ncolumns, 1)
+                bgdMethod.BGD(thetaInitial, 0.01, 0.00001, 15000)
+                modename = 'BGDFold'+str(i+1)
+                crossCoeff[modename] = bgdMethod.bgdBetahat
+                bgdLoss = LP_regression.SquareLoss(testsubset_x,
+                                                   testsubset_y,
+                                                   bgdMethod.bgdBetahat)
+                crossPerfom[modename] = bgdLoss
+            elif method == 'SGD':
+                sgdMethod = LP_regression(trainsubset_x, trainsubset_y, 1)
+                thetaInitial = np.random.rand(ncolumns, 1)
+                sgdMethod.SGD(thetaInitial, 200)
+                modename = 'SGDFold'+str(i+1)
+                crossCoeff[modename] = sgdMethod.sgdBetahat
+                sgdLoss = LP_regression.SquareLoss(testsubset_x,
+                                                   testsubset_y,
+                                                   sgdMethod.sgdBetahat)
+                crossPerfom[modename] = sgdLoss
+            else:
+                print("Make sure your method is one of those:\
+                      'OLS', 'BGD', 'SGD'")
+                sys.exit(0)
+
+        return(crossCoeff, crossPerfom)
+
 
 ###############################################################################
 # Single variable regression
@@ -319,6 +377,11 @@ task1.OLS()  # estimate coefficients with OLS
 task1.olsBetahat  # array([[3.73221579],[4.44742889]])
 print(task1.performance(method='OLS'))  # different loss
 
+#           Fullsample Loss
+# Absolute         0.390514
+# Square           0.439503
+# Huber            0.397632
+
 
 # check results with python package
 model1 = sm.OLS(task1.ytrain, task1.xtrain).fit()
@@ -334,16 +397,12 @@ plt.show()
 
 # estimate coefficients with batch gradient descent
 theta_initial1 = [0, 0]  # set initial value
-alpha1 = 0.998 # set learning rate, don't set it > 0.01
+alpha1 = 0.998  # set learning rate, use the optimial one from following code
 tolerate1 = 0.000001
 maxiter1 = 15000
 
-time_start = time.time()
 task1.BGD(theta_initial1, alpha1, tolerate1, maxiter1)
 print(task1.bgdBetahat)  # [[3.79527656][4.2805871 ]]
-time_end = time.time()
-time_end - time_start
-
 
 # find the optimial learning rate (warning: it takes several minutes)
 time_elapsed = np.zeros(500)
@@ -356,14 +415,26 @@ for n, m in enumerate(learningrate):
     time_elapsed[n] = time_end - time_start
 
 learningrate[list(time_elapsed).index(min(time_elapsed))]
-# it's very interesting that learning rate is close to 1 
+# it's very interesting that learning rate is close to 1
 
 # estimate coefficients with stochastic gradiet descent
 
-task1.SGD(theta_initial1, 100)
+task1.SGD(theta_initial1, 200)
 task1.sgdBetahat  # array([[4.04331295], [3.6267929 ]])
+task1.performance(method='SGD')
+#          Fullsample Loss
+# Absolute	0.397819
+# Square	0.447556
+# Huber	    0.407899
 
-# until now, it works not that well for SGD
+# until now, it does not work that well for SGD
+
+# K-fold cross validation function
+
+crossCeff, crossPerformance = task1.KFoldXV(5, method='SGD')
+# print the average loss
+print(sum(crossPerformance.values())/5)
+# 0.4490929390108606, it is almost same
 
 ###############################################################################
 # Polynomial Regression with One Regressor:
@@ -373,7 +444,7 @@ task1.sgdBetahat  # array([[4.04331295], [3.6267929 ]])
 
 # Prepare the dataset
 k = 10
-input_y = np.asmatrix(whr["Happiness Score"]).reshape(-1, 1)
+input_y = np.asmatrix(whr["Happiness Score"]).reshape(-1, )
 # constrcut a matrix to store all X (x^0 to x^10)
 poly_Xmatrix = np.ones(whr.shape[0]).reshape(-1, 1)
 for i in range(k):
@@ -488,7 +559,7 @@ ax.title.set_text((
     + 'the number of green and blue candies (Outsample)'))
 plt.show()
 
-
+# OLS for  a degree-2 polynomial in two ariables: freedom and family.
 
 
 
