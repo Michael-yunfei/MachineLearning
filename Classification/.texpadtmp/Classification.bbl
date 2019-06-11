@@ -1,0 +1,12 @@
+\begin{thebibliography}{}
+
+\bibitem[Friedman et~al., 2001]{friedman2001elements}
+Friedman, J., Hastie, T., and Tibshirani, R. (2001).
+\newblock {\em The elements of statistical learning}, volume~1.
+\newblock Springer series in statistics New York.
+
+\bibitem[Ng, 2014]{ng2014cs229}
+Ng, A. (2014).
+\newblock Cs229 machine learning: Lecture notes.
+
+\end{thebibliography}
