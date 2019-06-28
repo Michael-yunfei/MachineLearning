@@ -206,14 +206,59 @@ hlvector = np.vectorize(hl)
 hlvector(error)
 
 
-va = np.array(range(9)).reshape(-1, 1)
-vb = np.array(range(9)).reshape(-1, 1)
+va = np.array(range(9)).reshape(3, 3)
+# array([[0, 1, 2],
+#        [3, 4, 5],
+#        [6, 7, 8]])
 
-np.asmatrix(np.stack((va, vb),axis=-1)).shape
+vb = np.array(range(9)).reshape(3, 3) - 2
+# array([[-2, -1,  0],
+#        [ 1,  2,  3],
+#        [ 4,  5,  6]])
 
-va.reshape(-1, -1)
 
-np.min(va)
+np.asmatrix(va)[:, 1:]
+
+va[2:3, :]
+
+np.asmatrix(va)[:, 0]
+
+
+np.random.rand(3, 1)
+
+int(range(10))
+
+va - vb
+
+# array([[2, 2, 2],
+#        [2, 2, 2],
+#        [2, 2, 2]])
+
+
+vc = []
+
+vc.append(vb)
+
+np.stack(vb, axis=1)
+
+
+for i in range(10):
+    print(i)
+
+hello = np.array(range(10))
+len(hello)
+
+
+hello[hello == 6]
+np.where(hello==6)
+
+
+
+
+
+
+
+
 
 
 
