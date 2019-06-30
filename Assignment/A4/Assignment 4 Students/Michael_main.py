@@ -488,15 +488,15 @@ class Perceptron_binary(object):
         '''
         Input: a vector with shape = n by 1
         '''
-        gz = np.ones([z.shape[0], 1])
+        gz = np.zeros([z.shape[0], 1])
         for i in range(z.shape[0]):
-            if z[i, 0] < 0:
-                gz[i, 0] = -1
+            if z[i, 0] < 0.0:
+                gz[i, 0] = -1.0
             else:
-                gz[i, 0] = 1
+                gz[i, 0] = 1.0
         return(gz)
 
-    def fitPerceptron(self, alpha, iter):
+    def fitPerceptron(self, alpha, iter, method):
         '''
         Input:
             alpha - learning rate, one can drop alpha as it does not
@@ -508,37 +508,168 @@ class Perceptron_binary(object):
 
         # initialize the coefficients, m by 1
         self.perctr_coefs = np.zeros([m, 1])
-        # dummy matrix, n by k
-
-        # based on regulation methods to train the model
+        #
         for it in range(iter):
-            randomIndex = random.sample(range(n), n)
+            if method == 'SGD':
+                randomIndex = random.sample(range(n), n)
+            else:
+                randomIndex = range(n)
             for j in randomIndex:
                 y_vect = self.xtrain[j, :] @ self.perctr_coefs
-                y_vect = Perceptron_binary.signfun(y_vect)  # classify
-                if y_vect != self.Y[j, :]:
-                    self.perctr_coefs += self.xtrain[j, :] @ y_vect
-
+                y_vect = Perceptron_binary.signfun(y_vect).reshape(-1, 1) # classify
+                if y_vect[0, :] != self.ytrain[j, :]:
+                    self.perctr_coefs += alpha * self.xtrain[j, :].T @ self.ytrain[j, :]
     # prediction function
     def Pct_predict(self):
-        train_pctpredict = Perceptron_binary.signfun(self.xtrain @ self.perctr_coefs)
-        self.pct_train_accuracy = np.sum(train_pctpredict == self.ytrain, axis=0)/self.ytrain.shape[0]
-        test_pctpredict = Perceptron_binary.signfun(self.xtest @ self.perctr_coefs)
-        self.pct_test_accuracy = np.sum(test_pctpredict  == self.ytest, axis=0)/self.ytest.shape[0]
+        self.train_pctpredict = Perceptron_binary.signfun(self.xtrain @ self.perctr_coefs)
+        self.pct_train_accuracy = np.sum(self.train_pctpredict == self.ytrain, axis=0)/self.ytrain.shape[0]
+        self.test_pctpredict = Perceptron_binary.signfun(self.xtest @ self.perctr_coefs)
+        self.pct_test_accuracy = np.sum(self.test_pctpredict  == self.ytest, axis=0)/self.ytest.shape[0]
 
 
+###############################################################################
+# Part II.1 - train the model, binary with 4 feature test
+###############################################################################
+# binary with 4 features test
+part5wine = wine.query('WineClass==1| WineClass==3')  # filter 1 and 3 out
+part5wine = part5wine[['WineClass','Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity']]
+part5wine['newclass'] = np.where(part5wine['WineClass'] == 1, 1, -1)
+part5wine = part5wine[['newclass', 'Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity']]
+part5wine.shape
+part5wine.head()
+
+X5 = np.asmatrix(part5wine.iloc[:, 1:]).reshape(-1, 4)
+Y5 = np.asmatrix(part5wine.newclass).reshape(-1, 1)
+
+perceptron1 = Perceptron_binary(X5, Y5, 0.8, randomsplit=False,
+                                constant=True)
+perceptron1.fitPerceptron(1, 3, 'SGD')
+perceptron1.Pct_predict()
+print(perceptron1.pct_train_accuracy)  # 100%
+print(perceptron1.pct_test_accuracy)  # 100%
+
+# It's quite amazing that only 3 iterations, it already got 100% accuracy
+
+perceptron1.fitPerceptron(1, 15, 'GD')
+perceptron1.Pct_predict()
+print(perceptron1.pct_train_accuracy)  # matrix([[0.30588235]])
+print(perceptron1.pct_test_accuracy)
+
+# Calculate the update K
+# K = 16
+perceptron1.fitPerceptron(1, 16, 'GD')
+perceptron1.Pct_predict()
+print(perceptron1.pct_train_accuracy)
+print(perceptron1.pct_test_accuracy)
+# [[1.]]
+# [[0.95454545]]
+
+# Error
+print(1 -perceptron1.pct_train_accuracy)
+print(1 - perceptron1.pct_test_accuracy)
+
+###############################################################################
+# Part II.2 - train the model, binary with 2 feature test and plot
+###############################################################################
+
+part6wine = wine.query('WineClass==1| WineClass==3')  # filter 1 and 3 out
+part6wine = part6wine[['WineClass', 'Proanthocyanins','Alcalinity of ash']]
+part6wine['newclass'] = np.where(part6wine['WineClass'] == 1, 1, -1)
+part6wine = part6wine[['newclass', 'Proanthocyanins', 'Alcalinity of ash']]
+part6wine.shape
+part6wine.head()
+
+X6 = np.asmatrix(part6wine.iloc[:, 1:]).reshape(-1, 2)
+Y6 = np.asmatrix(part6wine.newclass).reshape(-1, 1)
+
+# plot the dataset
+fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+ax.scatter(part6wine.Proanthocyanins[part6wine.newclass==1],
+           part6wine['Alcalinity of ash'][part6wine.newclass==1],
+           facecolors='#FFFD38', edgecolors='grey',
+           s=60, label='Class 1')
+ax.scatter(part6wine.Proanthocyanins[part6wine.newclass==-1],
+           part6wine['Alcalinity of ash'][part6wine.newclass==-1],
+           marker='+', c='k', s=60, linewidth=2,
+           label='Class -1')
+ax.set(xlabel='Proanthocyanins', ylabel='Alcalinity of ash')
+ax.legend(frameon=True, fancybox=True)
+plt.show()
+
+# the dataset
+perceptron2 = Perceptron_binary(X6, Y6, 0.8, randomsplit=True,
+                                constant=True)
+perceptron2.fitPerceptron(1, 30, 'SGD')
+perceptron2.Pct_predict()
+print(perceptron2.pct_train_accuracy)
+print(perceptron2.pct_test_accuracy)
+# [[0.91764706]]
+# [[0.95454545]]
 
 
+# plot the Classification
+perct_train_idx1 = np.where(perceptron2.ytrain==1)[0]
+perct_train_idx1a = np.where(perceptron2.train_pctpredict==1)[0]
+perct_test_idx1 = np.where(perceptron2.ytest==1)[0]
+perct_test_idx1a = np.where(perceptron2.test_pctpredict==1)[0]
+perct_train_idx2 = np.where(perceptron2.ytrain==-1)[0]
+perct_train_idx2a = np.where(perceptron2.train_pctpredict==-1)[0]
+perct_test_idx2 = np.where(perceptron2.ytest==-1)[0]
+perct_test_idx2a = np.where(perceptron2.test_pctpredict==-1)[0]
+
+# all together plot
+fig, axes = plt.subplots(2, 2, figsize=(16, 16))
+axes[0, 0].scatter(np.asarray(perceptron2.xtrain[perct_train_idx1,1:2]),
+                np.asarray(perceptron2.xtrain[perct_train_idx1,2:3]),
+                facecolors='#FFFD38', edgecolors='grey',
+                s=60, label='Ground True Class 1 (train)')
+axes[0, 0].scatter(np.asarray(perceptron2.xtrain[perct_train_idx2,1:2]),
+                np.asarray(perceptron2.xtrain[perct_train_idx2,2:3]),
+                marker='+', c='k', s=60, linewidth=2,
+                label='Ground True Class -1 (train)')
+axes[0, 1].scatter(np.asarray(perceptron2.xtrain[perct_train_idx1a,1:2]),
+                np.asarray(perceptron2.xtrain[perct_train_idx1a,2:3]),
+                facecolors='#FFFD38', edgecolors='grey',
+                s=60, label='Estimated Class 1 (train)')
+axes[0, 1].scatter(np.asarray(perceptron2.xtrain[perct_train_idx2a,1:2]),
+                np.asarray(perceptron2.xtrain[perct_train_idx2a,2:3]),
+                marker='+', c='k', s=60, linewidth=2,
+                label='Estimated Class -1 (train)')
+axes[1, 0].scatter(np.asarray(perceptron2.xtrain[perct_test_idx1,1:2]),
+                np.asarray(perceptron2.xtrain[perct_test_idx1,2:3]),
+                facecolors='#4688F1', edgecolors='grey',
+                s=60, label='Ground True Class 1 (test)')
+axes[1, 0].scatter(np.asarray(perceptron2.xtrain[perct_test_idx2,1:2]),
+                np.asarray(perceptron2.xtrain[perct_test_idx2,2:3]),
+                marker='+', c='k', s=60, linewidth=2,
+                label='Ground True Class -1 (test)')
+axes[1, 1].scatter(np.asarray(perceptron2.xtrain[perct_test_idx1a,1:2]),
+                np.asarray(perceptron2.xtrain[perct_test_idx1a,2:3]),
+                facecolors='#4688F1', edgecolors='grey',
+                s=60, label='Estimated Class 1 (test)')
+axes[1, 1].scatter(np.asarray(perceptron2.xtrain[perct_test_idx2a,1:2]),
+                np.asarray(perceptron2.xtrain[perct_test_idx2a,2:3]),
+                marker='+', c='k', s=60, linewidth=2,
+                label='Estimated Class -1 (test)')
+axes[0,0].set(xlabel='Proanthocyanins', ylabel='Alcalinity of ash')
+axes[0,0].legend(frameon=True, fancybox=True)
+axes[0,1].set(xlabel='Proanthocyanins', ylabel='Alcalinity of ash')
+axes[0,1].legend(frameon=True, fancybox=True)
+axes[1,0].set(xlabel='Proanthocyanins', ylabel='Alcalinity of ash')
+axes[1,0].legend(frameon=True, fancybox=True)
+axes[1,1].set(xlabel='Proanthocyanins', ylabel='Alcalinity of ash')
+axes[1,1].legend(frameon=True, fancybox=True)
+plt.show()
 
 
+# check whether standardize data will improve accuracy or not
 
 
-
-
-
-
-
-
+###############################################################################
+# Part III.0 - Employ the Class to do the task III
+###############################################################################
 
 
 
