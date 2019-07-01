@@ -1,4 +1,4 @@
-# Assignment 4 - Classification
+nonparametric# Assignment 4 - Classification
 # @ Coco, Lada, Michael
 
 import pandas as pd
@@ -52,7 +52,6 @@ class LP_classify(object):
                   1-c-ii): perceptron classification
     Step 2: test the algorithm
             2-a): calcuate the loss or accuracy
-            2-b): calcuate the cross-valiation error
 
     The structure of Class LKP_classify(args, kwargs):
 
@@ -273,6 +272,9 @@ logist3.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:',logist3.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist3.test_logaccuracy)
 
+###############################################################################
+# 5-fold cross-validation
+###############################################################################
 # Find the optimal regulation
 l2_regulations = [1/(10**i) for i in range(1,7)]  # test 7 regulation parameters
 
@@ -435,17 +437,17 @@ class Perceptron_binary(object):
                   the same time")
             sys.exit(0)
         elif normalized is True:
-            self.X = np.apply_along_axis(LP_classify.normalize,
+            self.X = np.apply_along_axis(Perceptron_binary.normalize,
                                          axis=0, arr=self.X)
         elif standardized is True:
-            self.X = np.apply_along_axis(LP_classify.standard,
+            self.X = np.apply_along_axis(Perceptron_binary.standard,
                                          axis=0, arr=self.X)
         if constant is True:
             vector_one = np.ones(self.X.shape[0]).reshape(-1, 1)
             self.X = np.hstack((vector_one, self.X))
 
         self.xtrain, self.xtest, self.ytrain, self.ytest = (
-            LP_classify.splitSample(self.X, self.Y, percentile, randomsplit))
+            Perceptron_binary.splitSample(self.X, self.Y, percentile, randomsplit))
 
     @staticmethod
     def splitSample(sampleX, sampleY, trainSize, permute=False):
@@ -665,23 +667,271 @@ plt.show()
 
 
 # check whether standardize data will improve accuracy or not
+perceptron3 = Perceptron_binary(X6, Y6, 0.8, randomsplit=True,
+                                constant=True, standardized=True)
+perceptron3.fitPerceptron(1, 10, 'SGD')
+perceptron3.Pct_predict()
+print(perceptron3.pct_train_accuracy)
+print(perceptron3.pct_test_accuracy)
+# the results are quite similar
+
+###############################################################################
+# Part III.0 - employ the class to the task III
+###############################################################################
+
+class Knn_classify(object):
+        """
+        This is the class to do the binary classification with Knn algorithm
+        The algorithm takes the majority vote rule and does not employ the
+        weight for different fold
+        As this is nonparametric learnign, there is no need to add the constant
+        part into the X
+        """
+        def __init__(self, X, Y, percentile, randomsplit=False,
+                     normalized=False, standardized=False, constant=False):
+            '''
+            Initilize the input: (order matters)
+            Taken X and Y as dataframe or matrix format, but still trying to
+            convert to array and matrix
+            Default model includes interecpet
+            percential: the ratio for splitting the sample
+            randomsplit: if it is true, sample is splited  randomly
+            constant=False, if it is true, creat the constant vector and
+            add it to X.
+            '''
+            self.X = X
+            self.Y = Y
+            self.percentile = percentile
+            try:
+                self.X = np.asmatrix(self.X)
+                self.Y = np.asmatrix(self.Y).reshape(-1, 1)
+                if (self.X.shape[0] != self.Y.shape[0]):
+                    print('Input Y and X \
+                          have different sample size')
+                    sys.exit(0)
+            except Exception:
+                print('There is an error with the input data.\
+                      Make sure input are either matrix or dataframe')
+                sys.exit(0)
+
+            # normalize or standardize
+            if normalized is True and standardized is True:
+                print("You can either only normalize X or standardize X,\
+                      but not at the same time: dont't set them true at\
+                      the same time")
+                sys.exit(0)
+            elif normalized is True:
+                self.X = np.apply_along_axis(Knn_classify.normalize,
+                                             axis=0, arr=self.X)
+            elif standardized is True:
+                self.X = np.apply_along_axis(Knn_classify.standard,
+                                             axis=0, arr=self.X)
+            if constant is True:
+                vector_one = np.ones(self.X.shape[0]).reshape(-1, 1)
+                self.X = np.hstack((vector_one, self.X))
+
+            self.xtrain, self.xtest, self.ytrain, self.ytest = (
+                Knn_classify.splitSample(self.X, self.Y, percentile, randomsplit))
+
+        @staticmethod
+        def splitSample(sampleX, sampleY, trainSize, permute=False):
+            '''
+            static function to split the sample
+            '''
+            sample_length = int(sampleX.shape[0] * trainSize)
+            if permute is True:
+                random_index = random.sample(range(sampleX.shape[0]),
+                                             sample_length)
+                trainSampleX = sampleX[random_index, :]
+                trainSampleY = sampleY[random_index, :]
+                testSampleX = np.delete(sampleX, random_index, 0)
+                testSampleY = np.delete(sampleY, random_index, 0)
+
+                return(trainSampleX, testSampleX, trainSampleY, testSampleY)
+            else:
+                percentile_index = list(range(sample_length))
+                trainSampleX = sampleX[percentile_index, :]
+                trainSampleY = sampleY[percentile_index, :]
+                testSampleX = np.delete(sampleX, percentile_index, 0)
+                testSampleY = np.delete(sampleY, percentile_index, 0)
+
+                return(trainSampleX, testSampleX, trainSampleY, testSampleY)
+
+        # normalize function
+        @staticmethod
+        def normalize(array):
+            arrayNorm = (array - array.min())/(array.max() - array.min())
+            return arrayNorm
+
+        # standardlize function
+        @staticmethod
+        def standard(array):
+            arrayStand = (array - array.mean())/array.std()
+            return arrayStand
+
+        # def the fitKNN function
+        def fitKNN(self, kfold):
+            '''
+            Input: self.xtrain, self.ytrain, self.xtest, self.ytest
+            Defaultly, it employs the euclidean distance to measure
+            It assumes that classes are labled as 1 and 2
+            Step I: calculate the distance between new x and all the
+                    trainning data
+            Step II: chose the K nearest neighbors
+            Step III: let the neighbors vote
+            '''
+            # get the key dimensions
+            ntrain, mtrain = self.xtrain.shape
+            ntest, mtest = self.xtest.shape
+            k = kfold
+            classIdx = np.zeros([ntest, 1])
+            Xindx = np.hstack([self.xtest, classIdx])
+
+            for i in range(ntest):
+                xi = Xindx[i, :-1]
+                # transer it to matrix format
+                xi_mat = np.repeat(xi, ntrain, axis=0)
+                xi_diff = np.sqrt(np.sum(np.power(
+                    (xi_mat - self.xtrain), 2), axis=1))
+                sort_idx = np.argsort(xi_diff, axis=0)
+                kfold_idx = sort_idx[0:k]
+                class_idt = np.asarray(self.ytrain[kfold_idx, :])
+                # majority vote
+                class1_no = np.where(class_idt == 1)[0]
+                class2_no = np.where(class_idt == 2)[0]
+                if len(class1_no) > len(class2_no):
+                    Xindx[i, -1] = 1
+                else:
+                    Xindx[i, -1] = 2
+
+            # return the classifeid vector
+            self.Xindx = Xindx[:, -1]
+
+        # calcluate the error
+        def predictError(self):
+            accuracy = np.sum(self.Xindx == self.ytest, axis=0)/self.ytest.shape[0]
+            error = 1 - accuracy
+            self.accuracy = accuracy
+            self.error = error
+
+###############################################################################
+# Part III.1 - test the model, 2 classes and 4 features, kfold = 3
+###############################################################################
+
+part7wine = wine.query('WineClass==1| WineClass==3')  # filter 1 and 3 out
+part7wine = part7wine[['WineClass','Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity']]
+part7wine['newclass'] = np.where(part7wine['WineClass'] == 1, 1, 2)
+part7wine = part7wine[['newclass', 'Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity']]
+
+X7 = np.asmatrix(part7wine.iloc[:, 1:]).reshape(-1, 4)
+Y7 = np.asmatrix(part7wine.newclass).reshape(-1, 1)
+
+knn1 = Knn_classify(X7, Y7, 0.8, randomsplit=False)
+knn1.fitKNN(3)
+knn1.Xindx
+knn1.predictError()
+knn1.error
+
+# random split 60%
+knn2 = Knn_classify(X7, Y7, 0.6, randomsplit=True)
+knn2.fitKNN(3)
+knn2.Xindx
+knn2.predictError()
+knn2.error
 
 
 ###############################################################################
-# Part III.0 - Employ the Class to do the task III
+# Part III.2 - test the model, 2 classes and 6 features, kfold = 5
 ###############################################################################
 
+part8wine = wine.query('WineClass==1| WineClass==2')  # filter 1 and 2 out
+part8wine = part8wine[['WineClass','Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity', 'Hue', 'Proline']]
+part8wine['newclass'] = np.where(part8wine['WineClass'] == 1, 1, 2)
+part8wine = part8wine[['newclass', 'Alcohol','Flavanoids',
+                       'Proanthocyanins','Color intensity', 'Hue', 'Proline']]
+
+X8 = np.asmatrix(part8wine.iloc[:, 1:]).reshape(-1, 6)
+Y8 = np.asmatrix(part8wine.newclass).reshape(-1, 1)
+
+knn3 = Knn_classify(X8, Y8, 0.8, randomsplit=True)
+knn3.fitKNN(kfold=5)
+knn3.Xindx
+knn3.predictError()
+print(knn3.error)  # [[0.07692308]]
 
 
+###############################################################################
+# Part III.2 - 2 classes and 6 features, 10-fold cross-validation
+###############################################################################
 
+# use X8 and Y8 dataset
+# kfold = 3 to 8
 
+kParameter = np.array(range(3, 9))
 
+kfoldcv = 10
+test_perform = {}  # initialize a dict to store performance
 
+for lk in kParameter:
+    # split the sample
+    nrows = X8.shape[0]
+    subsetRows = math.floor(nrows/kfoldcv)
+    k_randomIndex = random.sample(range(nrows), nrows)
 
+    kfold_perf = {}
+    for j in range(kfoldcv):
+        subsetIndex = k_randomIndex[j*subsetRows:(j+1)*subsetRows]
+        testsubset_x = X8[subsetIndex, :]
+        trainsubset_x = np.delete(X8, subsetIndex, 0)
+        testsubset_y = Y8[subsetIndex, :]
+        trainsubset_y = np.delete(Y8, subsetIndex, 0)
+        ntrain, mtrain = trainsubset_x.shape
+        ntest, mtest = testsubset_x.shape
+        k = lk  # assign the k parameter
+        classIdx = np.zeros([ntest, 1])
+        Xindx = np.hstack([testsubset_x, classIdx])
+        for i in range(ntest):
+            xi = Xindx[i, :-1]
+            # transer it to matrix format
+            xi_mat = np.repeat(xi, ntrain, axis=0)
+            xi_diff = np.sqrt(np.sum(np.power(
+                (xi_mat - trainsubset_x), 2), axis=1))
+            sort_idx = np.argsort(xi_diff, axis=0)
+            kfold_idx = sort_idx[0:k]
+            class_idt = np.asarray(trainsubset_y[kfold_idx, :])
+            # majority vote
+            class1_no = np.where(class_idt == 1)[0]
+            class2_no = np.where(class_idt == 2)[0]
+            if len(class1_no) > len(class2_no):
+                Xindx[i, -1] = 1
+            else:
+                Xindx[i, -1] = 2
+        labelclass = Xindx[:, -1]
+        accuracy = np.sum(labelclass == testsubset_y, axis=0)/testsubset_y.shape[0]
+        error = 1 - accuracy
+        kfold_perf[str(j)] = error
 
+    test_perform[str(lk)] = kfold_perf
 
+test_perform
 
+print(pd.DataFrame(test_perform))
+print('The regulation number can produce the highest test accuracy is:', pd.DataFrame(test_perform).sum(axis=0)/10)
 
+# for 6 features, it's k=7
 
+# Try with 7 fold
+
+knn4 = Knn_classify(X8, Y8, 0.8, randomsplit=True)
+knn4.fitKNN(kfold=7)
+knn4.Xindx
+knn4.predictError()
+print(knn4.error)  # [[0.03846154]]
+
+print('The error is much smaller when k =7 compared to k = 5')
+# therefore, the optimal fold is 7 for binary classification with 6 features.
 
 # End of Code
