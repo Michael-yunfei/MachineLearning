@@ -252,11 +252,14 @@ len(hello)
 hello[hello == 6]
 np.where(hello==6)
 
+va + np.array([3]).reshape(-1, 1)
 
 
+dict1 = {'a':[[1, 2], [2, 3]], 'b':[[3, 6], [5, 9]]}
 
-
-
+dict_sum = np.zeros([2, 2])
+for i in dict1:
+    dict_sum += np.asmatrix(dict1[i])
 
 
 

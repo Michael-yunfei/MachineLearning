@@ -166,3 +166,17 @@ Vectorilize function !!!
 
 # computing statistics
 http://www.stat.cmu.edu/~ryantibs/
+
+# machine learning assignments
+
+https://github.com/rieder91/MachineLearning
+
+https://github.com/JWarmenhoven/Coursera-Machine-Learning
+
+
+# deep learning
+https://cs230.stanford.edu/syllabus/
+
+http://ufldl.stanford.edu/tutorial/
+
+http://pages.stat.wisc.edu/~sraschka/publications/#Book-Chapters
