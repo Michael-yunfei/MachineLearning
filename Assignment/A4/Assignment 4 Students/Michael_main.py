@@ -12,6 +12,7 @@ import sys
 import math
 import scipy.stats as stats
 from sklearn.linear_model import LogisticRegression
+from matplotlib.patches import Ellipse, Circle
 
 
 # check working directory
@@ -244,7 +245,7 @@ print('The accuracy  of prediction for test dataset is:', logist1a.test_logaccur
 
 # randomly split the sample
 logist1b = LP_classify(X1, Y1, 0.8, constant=True, randomsplit=True)
-logist1b.fitLogistic(alpha=0.01, regulation='l2', rgweight=0, iter=600)
+logist1b.fitLogistic(alpha=0.01, regulation='l2', rgweight=0, iter=200)
 logist1b.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:', logist1b.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist1b.test_logaccuracy)
@@ -252,7 +253,7 @@ print('The accuracy  of prediction for test dataset is:',logist1b.test_logaccura
 
 # L1 regulation with lambda = 0
 logist2 = LP_classify(X1, Y1, 0.8, constant=True)
-logist2.fitLogistic(alpha=0.01, regulation='l1', rgweight=0, iter=600)
+logist2.fitLogistic(alpha=0.01, regulation='l1', rgweight=0, iter=200)
 logist2.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:',logist2.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist2.test_logaccuracy)
@@ -267,7 +268,7 @@ print('The accuracy  of prediction for test dataset is:',logist2.test_logaccurac
 # tune the regulation weight
 # L2 regulation with lambda = 0.01
 logist3 = LP_classify(X1, Y1, 0.8, constant=True)
-logist3.fitLogistic(alpha=0.01, regulation='l2', rgweight=0.01, iter=600)
+logist3.fitLogistic(alpha=0.01, regulation='l2', rgweight=0.01, iter=200)
 logist3.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:',logist3.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist3.test_logaccuracy)
@@ -304,7 +305,7 @@ for lk in l2_regulations:
         kfoldpred = LP_classify.softmax(X_mat @ logkfold.log_coefs)
         test_loglabels = np.argmax(kfoldpred, axis=1)+np.min(Y1)
         test_accuracy = np.sum(testsubset_y == test_loglabels,
-                               axis=0)/testsubset_y[0]
+                               axis=0)/testsubset_y.shape[0]
         kfold_perf[str(i)] = np.asarray(test_accuracy).reshape(-1)
 
     test_perform[str(lk)] = kfold_perf
@@ -312,28 +313,28 @@ for lk in l2_regulations:
 print(pd.DataFrame(test_perform))
 print('The regulation number can produce the highest test accuracy is:', pd.DataFrame(test_perform).sum(axis=0)/5)
 # it's 0.0001 for 600 iterations
-# it 1e-6 for 200 iterations one round
+# it 1e-5/1e-6 for 200 iterations one round
 
 # try with 0.0001 again
 
 logist4 = LP_classify(X1, Y1, 0.8, constant=True, randomsplit=True)
-logist4.fitLogistic(alpha=0.01, regulation='l2', rgweight=1e-6, iter=200)
+logist4.fitLogistic(alpha=0.01, regulation='l2', rgweight=1e-5, iter=200)
 logist4.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:',logist4.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist4.test_logaccuracy)
-# 52%
+
 
 # try with standardize the data
 logist5 = LP_classify(X1, Y1, 0.8, constant=True, randomsplit=True,
                       standardized=True)
-logist5.fitLogistic(alpha=0.01, regulation='l2', rgweight=0.00001, iter=200)
+logist5.fitLogistic(alpha=0.01, regulation='l2', rgweight=1e-5, iter=200)
 logist5.Logpredict()
 print('The accuracy  of prediction for tranning dataset is:',logist5.train_logaccuracy)
 print('The accuracy  of prediction for test dataset is:',logist5.test_logaccuracy)
 # both of classification is close to 80%, it's qutie amazing with only 200 iterations
 
 ###############################################################################
-# Part I.2 - Final test: binary classification with many features
+# Part I.2 - Final test: binary classification with 4 features
 ###############################################################################
 part4wine = wine.query('WineClass==1| WineClass==3')  # filter 1 and 3 out
 part4wine = part4wine[['WineClass','Alcohol','Flavanoids',
@@ -349,7 +350,7 @@ Y4 = np.asmatrix(part4wine.newclass).reshape(-1, 1)
 
 logist6 = LP_classify(X4, Y4, 0.8, constant=True, randomsplit=True,
                       standardized=True)
-logist6.fitLogistic(alpha=0.01, regulation='l2', rgweight=0.00001, iter=200)
+logist6.fitLogistic(alpha=0.01, regulation='l2', rgweight=1e-5, iter=200)
 logist6.Logpredict()
 # logist6.ytest
 # logist6.test_logpred_labels
@@ -607,8 +608,6 @@ perceptron2.fitPerceptron(1, 30, 'SGD')
 perceptron2.Pct_predict()
 print(perceptron2.pct_train_accuracy)
 print(perceptron2.pct_test_accuracy)
-# [[0.91764706]]
-# [[0.95454545]]
 
 
 # plot the Classification
@@ -631,6 +630,8 @@ axes[0, 0].scatter(np.asarray(perceptron2.xtrain[perct_train_idx2,1:2]),
                 np.asarray(perceptron2.xtrain[perct_train_idx2,2:3]),
                 marker='+', c='k', s=60, linewidth=2,
                 label='Ground True Class -1 (train)')
+axes[0, 0].add_artist(Ellipse((1, 23), 1, 9, color='b', alpha=0.2))
+axes[0, 0].add_artist(Ellipse((2.2, 17), 1.7, 9, color='g', alpha=0.2))
 axes[0, 1].scatter(np.asarray(perceptron2.xtrain[perct_train_idx1a,1:2]),
                 np.asarray(perceptron2.xtrain[perct_train_idx1a,2:3]),
                 facecolors='#FFFD38', edgecolors='grey',
@@ -639,6 +640,8 @@ axes[0, 1].scatter(np.asarray(perceptron2.xtrain[perct_train_idx2a,1:2]),
                 np.asarray(perceptron2.xtrain[perct_train_idx2a,2:3]),
                 marker='+', c='k', s=60, linewidth=2,
                 label='Estimated Class -1 (train)')
+axes[0, 1].add_artist(Ellipse((1, 23), 1, 9, color='b', alpha=0.2))
+axes[0, 1].add_artist(Ellipse((2.2, 17), 1.7, 9, color='g', alpha=0.2))
 axes[1, 0].scatter(np.asarray(perceptron2.xtrain[perct_test_idx1,1:2]),
                 np.asarray(perceptron2.xtrain[perct_test_idx1,2:3]),
                 facecolors='#4688F1', edgecolors='grey',
@@ -860,7 +863,7 @@ knn3 = Knn_classify(X8, Y8, 0.8, randomsplit=True)
 knn3.fitKNN(kfold=5)
 knn3.Xindx
 knn3.predictError()
-print(knn3.error)  # [[0.07692308]]
+print(knn3.error)
 
 
 ###############################################################################
@@ -921,17 +924,17 @@ test_perform
 print(pd.DataFrame(test_perform))
 print('The regulation number can produce the highest test accuracy is:', pd.DataFrame(test_perform).sum(axis=0)/10)
 
-# for 6 features, it's k=7
+# for 6 features, it's k=5
 
-# Try with 7 fold
+# Try with 5
 
 knn4 = Knn_classify(X8, Y8, 0.8, randomsplit=True)
-knn4.fitKNN(kfold=7)
+knn4.fitKNN(kfold=5)
 knn4.Xindx
 knn4.predictError()
 print(knn4.error)  # [[0.03846154]]
 
-print('The error is much smaller when k =7 compared to k = 5')
-# therefore, the optimal fold is 7 for binary classification with 6 features.
+print('The error is much smaller when k =5')
+# therefore, the optimal fold is 5 for binary classification with 6 features.
 
 # End of Code
