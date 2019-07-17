@@ -1,4 +1,4 @@
-nonparametric# Assignment 4 - Classification
+# Assignment 4 - Classification
 # @ Coco, Lada, Michael
 
 import pandas as pd
@@ -17,6 +17,7 @@ from matplotlib.patches import Ellipse, Circle
 
 # check working directory
 os.getcwd()
+# please change it to the directory that contains the wine.csv dataset
 # os.chdir('/Users/Michael/Documents/MachineLearning/Assignment/A4')
 # os.chdir('C:/Users/User/Desktop/ML/assignments/3')
 
