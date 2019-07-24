@@ -262,7 +262,25 @@ for i in dict1:
     dict_sum += np.asmatrix(dict1[i])
 
 
-
+# test function for
+# numgrad = np.zeros(params.shape)
+# perturb = np.zeros(params.shape)
+# epsilon = 1e-4
+# for p in range(100):
+#     # Set perturbation vector
+#     perturb[p, 0] = epsilon
+#     J_perturb, grad1 = nn_twolayer_loglikely(params + perturb[p, 0], input_layer_size,
+#                                       hidden_layer_size, num_labels,
+#                                       X, y_mat, regulation)
+#     # Compute Numerical Gradient
+#     numgrad[p, 0] = (J_perturb - J) / epsilon
+#     perturb[p, 0] = 0
+#
+# Error_gradient = np.linalg.norm(
+#     numgrad[0:99]-grad[0:99])/np.linalg.norm(
+#         numgrad[0:99]+grad[0:99])
+# if Error_gradient>10e-2:
+#     print('your gradient is not correct')
 
 
 
